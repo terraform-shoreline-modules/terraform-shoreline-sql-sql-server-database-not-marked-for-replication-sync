@@ -1,0 +1,186 @@
+{
+  "name": "sql_server_database_not_marked_for_replication_sync",
+  "description": "This incident type refers to a situation where a SQL Server database is not marked for replication sync, which means it may not be synced with its backup. This can result in data loss or inconsistencies between the primary database and its backup. It is important to address this issue promptly to ensure data integrity and prevent potential downtime or data loss.",
+  "params": [
+    {
+      "name": "SQL_SERVER_SERVICE_NAME",
+      "value": ""
+    },
+    {
+      "name": "REPLICA_NAME",
+      "value": ""
+    },
+    {
+      "name": "DATABASE_NAME",
+      "value": ""
+    },
+    {
+      "name": "PORT_NUMBER",
+      "value": ""
+    },
+    {
+      "name": "BACKUP_NAME",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME_OR_IP_ADDRESS",
+      "value": ""
+    },
+    {
+      "name": "SERVER_NAME",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "NAMESPACE",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## SQL Server database not marked for replication sync.\nThis incident type refers to a situation where a SQL Server database is not marked for replication sync, which means it may not be synced with its backup. This can result in data loss or inconsistencies between the primary database and its backup. It is important to address this issue promptly to ensure data integrity and prevent potential downtime or data loss."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if SQL Server service is running"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `Get-Service -Name MSSQLSERVER`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the replication status of a database"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `sqlcmd -S ${SERVER_NAME} -E -Q \"SELECT name, is_published, is_subscribed, is_merge_published, is_distributor FROM sys.databases\"`"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if the database is sync with the backup"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `sqlcmd -S ${SERVER_NAME} -E -Q \"SELECT [name], [is_sync_with_backup] FROM sys.databases\"`"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check replication monitor for errors"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `sqlcmd -S ${SERVER_NAME} -E -Q \"SELECT * FROM [distribution].[dbo].[MSrepl_errors]\"`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Next Step"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `@echo off`"
+    },
+    {
+      "name": "cell_12",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Next Step"
+    },
+    {
+      "name": "cell_13",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_backup_script($REPLICA_NAME, $DATABASE_NAME, $BACKUP_NAME)"
+    },
+    {
+      "name": "cell_14",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Next Step"
+    },
+    {
+      "name": "cell_15",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_check_replication_settings($SERVER_NAME)"
+    },
+    {
+      "name": "cell_16",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Next Step"
+    },
+    {
+      "name": "cell_17",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_replication_check()"
+    },
+    {
+      "name": "cell_18",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Restart the SQL Server service to see if it resolves the issue."
+    },
+    {
+      "name": "cell_19",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_sql_service_restart($SQL_SERVER_SERVICE_NAME)"
+    },
+    {
+      "name": "cell_20",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the database replication settings and ensure that it is set to sync with its backup."
+    },
+    {
+      "name": "cell_21",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_replication_sync_script($DATABASE_NAME, $SERVER_NAME)"
+    },
+    {
+      "name": "cell_22",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the network connectivity and ensure that it is not blocking the replication process."
+    },
+    {
+      "name": "cell_23",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_network_connectivity_test($PORT_NUMBER, $HOST_NAME_OR_IP_ADDRESS)"
+    }
+  ]
+}
